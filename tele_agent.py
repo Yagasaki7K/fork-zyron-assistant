@@ -2,8 +2,8 @@ import logging
 import asyncio
 import os
 from dotenv import load_dotenv
-from telegram import Update, constants
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
+from telegram import Update, constants, ReplyKeyboardMarkup, KeyboardButton
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 from brain import process_command
 from muscles import execute_command, capture_webcam
 import memory
@@ -26,29 +26,38 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# --- THE CAMERA LOOP TASK ---
+# --- KEYBOARD LAYOUT ---
+def get_main_keyboard():
+    keyboard = [
+        [KeyboardButton("/screenshot"), KeyboardButton("/sleep")],
+        [KeyboardButton("/camera_on"), KeyboardButton("/camera_off")],
+        [KeyboardButton("/batterypercentage"), KeyboardButton("/systemhealth")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+# --- CAMERA LOOP ---
 async def camera_monitor_loop(bot, chat_id):
-    """Sends a photo every 3 seconds while CAMERA_ACTIVE is True."""
     global CAMERA_ACTIVE
-    
-    status_msg = await bot.send_message(chat_id, "🔴 Live Feed Started (Updating every 3s)...")
+    status_msg = await bot.send_message(chat_id, "🔴 Live Feed Started...")
     
     while CAMERA_ACTIVE:
-        # 1. Take Photo
         photo_path = capture_webcam()
-        
-        # 2. Send it
         if photo_path and os.path.exists(photo_path):
             try:
-                # We send a new photo because editing media is tricky in Telegram
                 await bot.send_photo(chat_id, photo=open(photo_path, 'rb'))
-            except Exception as e:
-                print(f"Stream Error: {e}")
-        
-        # 3. Wait
+            except:
+                pass
         await asyncio.sleep(3) 
-
+    
     await bot.send_message(chat_id, "xxxx Camera Feed Stopped.")
+
+# --- START COMMAND ---
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user.first_name
+    await update.message.reply_text(
+        f"⚡ **Pikachu Online!**\nHello {user}. Use the buttons below.",
+        reply_markup=get_main_keyboard()
+    )
 
 # --- MAIN HANDLER ---
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -56,166 +65,134 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
     sender = update.message.from_user.username
     chat_id = update.effective_chat.id
+    lower_text = user_text.lower()
     
     print(f"\n📩 Message from @{sender}: {user_text}")
 
-    if ALLOWED_USERS and sender not in ALLOWED_USERS:
-        await update.message.reply_text("⛔ Access Denied.")
-        return
-
-    # 1. Feedback
+    # 1. Show "Typing..." status
     await context.bot.send_chat_action(chat_id=chat_id, action=constants.ChatAction.TYPING)
-    status_msg = await update.message.reply_text("⚡ Processing...")
 
-    # 2. Send to Brain
-    loop = asyncio.get_running_loop()
-    try:
-        command_json = await loop.run_in_executor(None, process_command, user_text)
-    except Exception as e:
-        await status_msg.edit_text(f"❌ Brain Error: {e}")
-        return
+    # 2. INSTANT OVERRIDES (Bypass AI entirely for speed)
+    command_json = None
+    
+    if "/battery" in lower_text or "battery" in lower_text:
+        command_json = {"action": "check_battery"}
+    elif "/systemhealth" in lower_text or "system health" in lower_text:
+        command_json = {"action": "check_health"}
+    elif "/screenshot" in lower_text or "screenshot" in lower_text:
+        command_json = {"action": "take_screenshot"}
+    elif "/sleep" in lower_text:
+        command_json = {"action": "system_sleep"}
+    elif "/camera_on" in lower_text:
+        command_json = {"action": "camera_stream", "value": "on"}
+    elif "/camera_off" in lower_text:
+        command_json = {"action": "camera_stream", "value": "off"}
 
+    # 3. If no override, ask the Brain (AI)
+    # We send a temporary status message
+    status_msg = await update.message.reply_text("⚡ Thinking...", reply_markup=get_main_keyboard())
+
+    if not command_json:
+        loop = asyncio.get_running_loop()
+        try:
+            # Run AI in a separate thread
+            command_json = await loop.run_in_executor(None, process_command, user_text)
+        except Exception as e:
+            # Safe Error Handling
+            await status_msg.delete()
+            await update.message.reply_text(f"❌ Brain Error: {e}", reply_markup=get_main_keyboard())
+            return
+
+    # 4. EXECUTE THE ACTION
     if command_json:
         action = command_json.get('action')
         
-        # --- MEMORY UPDATE ---
-        if action == "open_app":
-            memory.update_context("open_app", target=command_json.get("app_name"))
-        elif action == "open_url":
-            memory.update_context("open_url", target=command_json.get("browser_path"))
-        elif action in ["list_files", "send_file"]:
-            memory.update_context("file_access", target=command_json.get("path"))
-        elif action == "save_memory":
-            key = command_json.get("key")
-            val = command_json.get("value")
-            memory.save_long_term(key, val)
-            await status_msg.edit_text(f"🧠 Memory Updated: I'll remember that {key} is {val}.")
-            return 
+        # --- Physical Actions ---
+        if action == "check_battery":
+            status = execute_command(command_json)
+            await status_msg.delete()
+            await update.message.reply_text(f"🔋 {status}", reply_markup=get_main_keyboard())
+            
+        elif action == "check_health":
+            report = execute_command(command_json)
+            await status_msg.delete()
+            await update.message.reply_text(report, reply_markup=get_main_keyboard())
+            
+        elif action == "take_screenshot":
+            # Just update text to "Uploading" before sending photo
+            await status_msg.delete()
+            loader = await update.message.reply_text("📸 Capture...", reply_markup=get_main_keyboard())
+            path = execute_command(command_json)
+            if path:
+                await update.message.reply_photo(photo=open(path, 'rb'))
+                await loader.delete()
+            else:
+                await loader.edit_text("❌ Screenshot failed.")
+                
+        elif action == "system_sleep":
+            await status_msg.delete()
+            await update.message.reply_text("💤 Goodnight.", reply_markup=get_main_keyboard())
+            execute_command(command_json)
 
-        if action == "general_chat":
-            reply = command_json.get('response', "...")
-            await status_msg.edit_text(f"💬 {reply}")
-
-        # --- CAMERA STREAM TOGGLE ---
         elif action == "camera_stream":
             val = command_json.get("value")
+            await status_msg.delete()
             if val == "on":
                 if not CAMERA_ACTIVE:
                     CAMERA_ACTIVE = True
-                    await status_msg.edit_text("👀 Camera ON. Initializing feed...")
                     asyncio.create_task(camera_monitor_loop(context.bot, chat_id))
-                else:
-                    await status_msg.edit_text("⚠️ Camera is already running!")
-            elif val == "off":
+            else:
                 CAMERA_ACTIVE = False
-                await status_msg.edit_text("🛑 Stopping camera feed...")
+                await update.message.reply_text("🛑 Stopping Camera...", reply_markup=get_main_keyboard())
 
-        # --- SLEEP MODE ---
-        elif action == "system_sleep":
-            await status_msg.edit_text("💤 Putting laptop to sleep...")
-            execute_command(command_json)
-
-        # --- BATTERY CHECK ---
-        elif action == "check_battery":
-            await status_msg.edit_text("🔋 Checking power levels...")
-            battery_status = execute_command(command_json)
-            await update.message.reply_text(battery_status)
-
-        # --- SYSTEM HEALTH CHECK (NEW) ---
-        elif action == "check_health":
-            await status_msg.edit_text("🏥 Performing system diagnostic...")
-            health_report = execute_command(command_json)
-            await update.message.reply_text(health_report)
-
-        # --- SCREENSHOT ---
-        elif action == "take_screenshot":
-            await status_msg.edit_text("📸 Capture...")
-            image_path = execute_command(command_json)
-            if image_path:
-                await status_msg.edit_text("📤 Uploading...")
-                await update.message.reply_photo(photo=open(image_path, 'rb'))
-            else:
-                await status_msg.edit_text("❌ Screenshot failed.")
-
-        # --- LIST FILES ---
+        elif action == "general_chat":
+            response = command_json.get('response', "...")
+            # SAFE REPLY: Delete old status, send new message
+            await status_msg.delete()
+            await update.message.reply_text(f"💬 {response}", reply_markup=get_main_keyboard())
+            
+        # --- File / App Handling ---
         elif action == "list_files":
+            await status_msg.delete()
             raw_path = command_json.get('path')
-            # Basic path resolution
-            if "desktop" in raw_path.lower():
-                raw_path = os.path.join(os.path.expanduser("~"), "Desktop")
-            elif "downloads" in raw_path.lower():
-                raw_path = os.path.join(os.path.expanduser("~"), "Downloads")
-                
-            await status_msg.edit_text(f"📂 Reading folder: {raw_path}...")
+            if "desktop" in raw_path.lower(): raw_path = os.path.join(os.path.expanduser("~"), "Desktop")
+            elif "downloads" in raw_path.lower(): raw_path = os.path.join(os.path.expanduser("~"), "Downloads")
             
-            if os.path.exists(raw_path) and os.path.isdir(raw_path):
+            if os.path.exists(raw_path):
                 try:
-                    files = os.listdir(raw_path)
-                    if files:
-                        files.sort()
-                        files = files[:30] # Limit to 30
-                        formatted_list = [f"🔹 {f}" for f in files]
-                        file_list_text = "\n\n".join(formatted_list)
-                        header = f"📂 **Contents of {os.path.basename(raw_path)}:**\n━━━━━━━━━━━━━━━━\n"
-                        full_message = header + file_list_text
-                        
-                        if len(full_message) > 4000:
-                            await update.message.reply_text(full_message[:4000] + "\n...(Truncated)")
-                        else:
-                            await update.message.reply_text(full_message)
-                    else:
-                        await update.message.reply_text("📂 The folder is empty.")
-                except Exception as e:
-                    await update.message.reply_text(f"❌ Error: {e}")
+                    files = os.listdir(raw_path)[:20]
+                    text = "\n".join([f"🔹 {f}" for f in files])
+                    await update.message.reply_text(f"📂 **Files:**\n{text}", reply_markup=get_main_keyboard())
+                except: 
+                    await update.message.reply_text("❌ Failed to read folder.", reply_markup=get_main_keyboard())
             else:
-                await update.message.reply_text("❌ Folder not found.")
+                await update.message.reply_text("❌ Folder not found.", reply_markup=get_main_keyboard())
 
-        # --- SEND FILE ---
         elif action == "send_file":
-            raw_path = command_json.get('path')
-            if raw_path.startswith("file:///"): raw_path = raw_path.replace("file:///", "")
-            
-            file_path = os.path.normpath(raw_path)
-            
-            await status_msg.edit_text(f"🔎 Fetching: {os.path.basename(file_path)}")
-            if os.path.exists(file_path) and os.path.isfile(file_path):
-                await update.message.reply_text("📤 Uploading...")
-                try:
-                    await update.message.reply_document(document=open(file_path, 'rb'))
-                except Exception as e:
-                    await update.message.reply_text(f"❌ Upload Failed: {e}")
-            else:
-                await update.message.reply_text("❌ File not found.")
+             await status_msg.delete()
+             raw_path = command_json.get('path')
+             if os.path.exists(raw_path):
+                 await update.message.reply_text("📤 Uploading...", reply_markup=get_main_keyboard())
+                 await update.message.reply_document(open(raw_path, 'rb'))
+             else:
+                 await update.message.reply_text("❌ File not found.", reply_markup=get_main_keyboard())
 
-        # --- PHYSICAL ACTIONS (Apps/URL/System) ---
         else:
-            if action == "close_app":
-                target = command_json.get('app_name', 'application')
-                await status_msg.edit_text(f"💀 Killing {target}...")
-            elif action == "open_url":
-                target = command_json.get('url', 'website')
-                await status_msg.edit_text(f"🌐 Opening {target}...")
-            elif action == "system_control":
-                await status_msg.edit_text(f"⚙️ Adjusting System...")
-            elif action == "open_app":
-                target = command_json.get('app_name')
-                await status_msg.edit_text(f"🚀 Opening {target}...")
-            
+            # Handle apps, urls
             try:
                 execute_command(command_json)
-                await update.message.reply_text("✅ Done.")
+                await status_msg.delete()
+                await update.message.reply_text(f"✅ Action Complete: {action}", reply_markup=get_main_keyboard())
             except Exception as e:
-                await update.message.reply_text(f"❌ Execution Failed: {e}")
-            
-    else:
-        await status_msg.edit_text("❓ I didn't understand that.")
+                await status_msg.delete()
+                await update.message.reply_text(f"❌ Error: {e}", reply_markup=get_main_keyboard())
 
 if __name__ == "__main__":
     print("🚀 TELEGRAM BOT STARTED...")
     try:
         application = ApplicationBuilder().token(TOKEN).build()
-        msg_handler = MessageHandler(filters.TEXT | filters.COMMAND, handle_message) 
-        application.add_handler(msg_handler)
+        application.add_handler(CommandHandler("start", start_command))
+        application.add_handler(MessageHandler(filters.TEXT | filters.COMMAND, handle_message))
         application.run_polling()
     except Exception as e:
         print(f"❌ Critical Error: {e}")
