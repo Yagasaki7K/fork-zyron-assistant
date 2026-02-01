@@ -1,12 +1,13 @@
 <div align="center">
 
-# ⚡ Pikachu Desktop Assistant
+# ⚡ Zyron Desktop Assistant
 
 <img src="https://img.shields.io/badge/Python-3.10+-blue.svg" alt="Python">
 <img src="https://img.shields.io/badge/Platform-Windows-0078D6.svg" alt="Platform">
 <img src="https://img.shields.io/badge/AI-Ollama-000000.svg" alt="AI">
 <img src="https://img.shields.io/badge/Privacy-100%25%20Local-success.svg" alt="Privacy">
 <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+<img src="https://img.shields.io/badge/Version-1.1-brightgreen.svg" alt="Version">
 
 **An intelligent, privacy-first desktop assistant that controls your PC via Telegram or Voice**
 
@@ -20,13 +21,13 @@
 
 ## 🎯 Overview
 
-Pikachu Desktop Assistant transforms your Windows PC into an intelligent, voice-controlled workstation. Built with privacy at its core, it runs **100% locally** using Ollama—no API keys, no cloud services, no data leakage.
+Zyron Desktop Assistant transforms your Windows PC into an intelligent, voice-controlled workstation. Built with privacy at its core, it runs **100% locally** using Ollama—no API keys, no cloud services, no data leakage.
 
-### Why Pikachu?
+### Why Zyron?
 
 ```
 ✅ Complete Privacy       → All processing happens on your machine
-✅ Voice + Remote Control → "Hey Pikachu" or Telegram commands
+✅ Voice + Remote Control → "Hey Zyron" or Telegram commands
 ✅ Zero Subscriptions     → No OpenAI, no monthly fees
 ✅ Enterprise Security    → Bank-grade local execution
 ✅ Extensible & Modern    → Python-based, easy to customize
@@ -41,11 +42,12 @@ Pikachu Desktop Assistant transforms your Windows PC into an intelligent, voice-
 <td width="50%">
 
 ### 🎮 **Core Capabilities**
-- **🗣️ Voice Control** - Wake word detection ("Hey Pikachu")
+- **🗣️ Voice Control** - Wake word detection ("Hey Zyron")
 - **📱 Telegram Remote** - Control PC from anywhere
 - **🧠 Local AI Brain** - Powered by Qwen 2.5 Coder (7B)
 - **🔒 Stealth Mode** - Runs invisibly in background
 - **🚀 Auto-Start** - Launches on Windows boot
+- **🎙️ Audio Recorder** - Record desktop + mic audio
 
 </td>
 <td width="50%">
@@ -56,6 +58,7 @@ Pikachu Desktop Assistant transforms your Windows PC into an intelligent, voice-
 - **🔋 Health Monitor** - Battery, RAM, CPU, Disk
 - **📂 File Manager** - Browse & download files
 - **🌐 Browser Automation** - Launch sites instantly
+- **🎵 Audio Capture** - 10-second recordings sent to Telegram
 
 </td>
 </tr>
@@ -70,11 +73,13 @@ Telegram:
   "System status"         → RAM, CPU, Battery report
   "Sleep"                 → Puts PC to sleep
   "List my documents"     → Shows files in Documents
+  "Record audio"          → Records 10s desktop + mic audio
 
 Voice:
-  "Hey Pikachu, open Spotify"
-  "Hey Pikachu, what's my battery level?"
-  "Hey Pikachu, take a screenshot"
+  "Hey Zyron, open Spotify"
+  "Hey Zyron, what's my battery level?"
+  "Hey Zyron, take a screenshot"
+  "Hey Zyron, record audio"
 ```
 
 ---
@@ -104,8 +109,8 @@ The setup script handles everything automatically:
 
 ```bash
 # 1. Download and extract the project
-git clone https://github.com/YOUR_USERNAME/pikachu-assistant.git
-cd pikachu-assistant
+git clone https://github.com/YOUR_USERNAME/zyron-assistant.git
+cd zyron-assistant
 
 # 2. Run the automated installer
 setup.bat
@@ -116,7 +121,7 @@ setup.bat
 - ✅ Creates virtual environment
 - ✅ Installs all dependencies
 - ✅ Downloads AI model (qwen2.5-coder:7b)
-- ✅ Configures auto-start
+- ✅ Configures auto-start on boot
 - ✅ Sets up stealth mode
 
 ### **Option 2: Manual Installation**
@@ -142,8 +147,8 @@ ollama run qwen2.5-coder:7b
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/pikachu-assistant.git
-cd pikachu-assistant
+git clone https://github.com/YOUR_USERNAME/zyron-assistant.git
+cd zyron-assistant
 
 # Create virtual environment
 python -m venv venv
@@ -198,8 +203,8 @@ run_silent.vbs
 1. **Create Bot:**
    - Message [@BotFather](https://t.me/BotFather) on Telegram
    - Send `/newbot`
-   - Choose a name: `My Pikachu Assistant`
-   - Choose a username: `mypikachu_bot` (must end with `_bot`)
+   - Choose a name: `My Zyron Assistant`
+   - Choose a username: `myzyron_bot` (must end with `_bot`)
 
 2. **Get Token:**
    - BotFather will give you a token like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
@@ -217,12 +222,12 @@ Voice activation uses wake word detection. To enable:
 ```python
 # In config.py or .env:
 ENABLE_VOICE=True
-WAKE_WORD="hey pikachu"  # Customize wake phrase
+WAKE_WORD="hey zyron"  # Customize wake phrase
 ```
 
 ### Auto-Start Configuration
 
-The installer automatically adds Pikachu to Windows Startup. To manage:
+The installer automatically adds Zyron to Windows Startup. To manage:
 
 **Enable:**
 ```bash
@@ -232,7 +237,7 @@ setup.bat  # Re-run installer
 **Disable:**
 ```bash
 # Delete shortcut from:
-%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\PikachuAgent.lnk
+%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\ZyronAgent.lnk
 ```
 
 ---
@@ -281,6 +286,13 @@ python main.py
 /upload          → Upload file from Telegram to PC
 ```
 
+#### Audio Recording (NEW in v1.1)
+```
+/record          → Record 10s desktop + mic audio
+                   Captures system sounds and environment
+                   Sent to Telegram within ~1 minute
+```
+
 #### AI Assistant
 ```
 /ask [question]  → Ask the AI anything
@@ -293,10 +305,11 @@ python main.py
 Activate with wake word, then speak:
 
 ```
-"Hey Pikachu, open Chrome"
-"Hey Pikachu, what's my battery level?"
-"Hey Pikachu, lock my computer"
-"Hey Pikachu, take a screenshot"
+"Hey Zyron, open Chrome"
+"Hey Zyron, what's my battery level?"
+"Hey Zyron, lock my computer"
+"Hey Zyron, take a screenshot"
+"Hey Zyron, record audio"
 ```
 
 ---
@@ -386,12 +399,23 @@ LOG_LEVEL=ERROR    # Only errors
 
 </details>
 
+<details>
+<summary><b>Audio recording not working</b></summary>
+
+**Solution:**
+1. Install required audio dependencies: `pip install pyaudio sounddevice`
+2. Check Windows sound settings (both desktop and microphone enabled)
+3. Verify sufficient disk space for temporary audio files
+4. Ensure Telegram bot has file upload permissions
+
+</details>
+
 ---
 
 ## 📁 Project Structure
 
 ```
-pikachu-assistant/
+zyron-assistant/
 ├── 📄 .gitignore              # Git ignore rules
 ├── 📄 README.md               # This file - Project documentation
 ├── 📄 brain.py                # AI brain & Ollama integration
@@ -402,7 +426,7 @@ pikachu-assistant/
 ├── 📄 requirements.txt        # Python dependencies
 ├── 📄 run_silent.vbs          # Stealth launcher (runs hidden)
 ├── 📄 setup.bat               # Automated installer & configurator
-├── 📄 start_pikachu.bat       # Quick start script
+├── 📄 start_zyron.bat         # Quick start script
 ├── 📄 tele_agent.py           # Telegram bot handler
 ├── 📄 test_mic.py             # Microphone testing utility
 ├── 📄 .env                    # Environment config (create this)
@@ -414,15 +438,44 @@ pikachu-assistant/
 | File | Purpose |
 |------|---------|
 | **brain.py** | Core AI engine powered by Ollama (qwen2.5-coder:7b) |
-| **listener.py** | Voice wake word detection ("Hey Pikachu") |
+| **listener.py** | Voice wake word detection ("Hey Zyron") |
 | **tele_agent.py** | Telegram bot integration for remote control |
-| **muscles.py** | System control (apps, screenshots, files, battery) |
+| **muscles.py** | System control (apps, screenshots, files, battery, audio) |
 | **memory.py** | Conversation context & chat history management |
 | **main.py** | Application orchestrator & startup logic |
 | **setup.bat** | One-click installer with progress animations |
 | **run_silent.vbs** | Background launcher (stealth mode) |
-| **start_pikachu.bat** | Quick start without installation |
+| **start_zyron.bat** | Quick start without installation |
 | **test_mic.py** | Diagnostic tool for microphone testing |
+
+---
+
+## 🆕 What's New in v1.1
+
+### Major Updates
+
+🎉 **Brand Refresh**: Pikachu is now **Zyron** - A more professional name for your desktop assistant
+
+🚀 **Auto-Start on Boot**: Zyron now automatically starts when Windows boots
+- Runs in stealth mode by default
+- No console window or taskbar interruption
+- Configured automatically during installation
+- Can be disabled/enabled via Windows Startup folder
+
+🎙️ **Audio Recorder Feature**: New audio capture capability
+- Records **10 seconds** of combined audio:
+  - Desktop audio (system sounds, music, videos)
+  - Environment audio (microphone input)
+- Automatically processes and sends to your Telegram bot
+- Delivery within **~1 minute** of recording
+- Perfect for monitoring, logging, or capturing important moments
+- Command: `/record` or "Hey Zyron, record audio"
+
+### Technical Improvements
+- Enhanced installer now configures auto-start automatically
+- Improved stealth mode stability
+- Better error handling for audio devices
+- Optimized audio processing pipeline
 
 ---
 
@@ -440,8 +493,8 @@ Contributions are welcome! Here's how you can help:
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/pikachu-assistant.git
-cd pikachu-assistant
+git clone https://github.com/YOUR_USERNAME/zyron-assistant.git
+cd zyron-assistant
 
 # Create development branch
 git checkout -b dev
@@ -475,6 +528,12 @@ A: For remote control, yes. Voice-only mode coming soon.
 **Q: Can I contribute?**  
 A: Absolutely! See [Contributing](#-contributing) section.
 
+**Q: Does auto-start slow down my PC boot time?**  
+A: No. Zyron launches in the background after Windows loads, using minimal resources.
+
+**Q: What audio formats does the recorder support?**  
+A: Recordings are saved as WAV files and automatically converted for Telegram upload.
+
 ---
 
 ## 📜 License
@@ -483,7 +542,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ```
 MIT License - Free to use, modify, and distribute
-© 2025 Pikachu Desktop Assistant
+© 2025 Zyron Desktop Assistant
 ```
 
 ---
@@ -501,9 +560,9 @@ MIT License - Free to use, modify, and distribute
 
 Need help? We've got you covered:
 
-- 📖 **Documentation:** [Wiki](https://github.com/Surajkumar5050/pikachu-assistant/tree/main/docs)
-- 🐛 **Bug Reports:** [Issues](https://github.com/Surajkumar5050/pikachu-assistant/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/Surajkumar5050/pikachu-assistant/issues)
+- 📖 **Documentation:** [Wiki](https://github.com/Surajkumar5050/zyron-assistant/tree/main/docs)
+- 🐛 **Bug Reports:** [Issues](https://github.com/Surajkumar5050/zyron-assistant/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/Surajkumar5050/zyron-assistant/issues)
 - ⭐ **Star this repo** if you find it useful!
 
 ---
@@ -514,6 +573,6 @@ Need help? We've got you covered:
 
 If this project helped you, consider giving it a ⭐ star!
 
-[⬆ Back to Top](#-pikachu-desktop-assistant)
+[⬆ Back to Top](#-zyron-desktop-assistant)
 
 </div>

@@ -31,7 +31,8 @@ def get_main_keyboard():
     keyboard = [
         [KeyboardButton("/screenshot"), KeyboardButton("/sleep")],
         [KeyboardButton("/camera_on"), KeyboardButton("/camera_off")],
-        [KeyboardButton("/batterypercentage"), KeyboardButton("/systemhealth")]
+        [KeyboardButton("/batterypercentage"), KeyboardButton("/systemhealth")],
+        [KeyboardButton("/recordaudio")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -85,6 +86,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         command_json = {"action": "camera_stream", "value": "on"}
     elif "/camera_off" in lower_text:
         command_json = {"action": "camera_stream", "value": "off"}
+    elif "/recordaudio" in lower_text or "record audio" in lower_text:
+        command_json = {"action": "record_audio", "duration": 10}
 
  
     status_msg = await update.message.reply_text("⚡ Thinking...", reply_markup=get_main_keyboard())
@@ -141,6 +144,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 CAMERA_ACTIVE = False
                 await update.message.reply_text("🛑 Stopping Camera...", reply_markup=get_main_keyboard())
+
+        elif action == "record_audio":
+            await status_msg.delete()
+            duration = command_json.get("duration", 10)
+            loader = await update.message.reply_text(f"🎤 Recording audio for {duration} seconds...", reply_markup=get_main_keyboard())
+            
+            # Execute audio recording in executor to avoid blocking
+            loop = asyncio.get_running_loop()
+            audio_path = await loop.run_in_executor(None, execute_command, command_json)
+            
+            if audio_path and os.path.exists(audio_path):
+                try:
+                    await loader.delete()
+                except:
+                    pass  # Ignore if message already deleted
+                
+                # Send the audio file
+                await update.message.reply_audio(audio=open(audio_path, 'rb'), caption="🎵 Recorded Audio (10 seconds)")
+            else:
+                try:
+                    await loader.edit_text("❌ Audio recording failed.")
+                except:
+                    await update.message.reply_text("❌ Audio recording failed.", reply_markup=get_main_keyboard())
 
         elif action == "general_chat":
             response = command_json.get('response', "...")

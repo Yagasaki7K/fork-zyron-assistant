@@ -5,6 +5,9 @@ import cv2
 import screen_brightness_control as sbc
 import psutil
 import shutil
+import sounddevice as sd
+from scipy.io.wavfile import write
+import numpy as np
 
 PROCESS_NAMES = {
     # Browsers
@@ -118,6 +121,42 @@ def capture_screen():
         print(f"Error taking screenshot: {e}")
         return None
 
+
+def record_audio(duration=10):
+    """Records audio from the default microphone for specified duration (in seconds).
+    Uses sounddevice library - Works on Windows Python 3.10 without C++ compiler!"""
+    file_path = os.path.join(os.getcwd(), "audio_recording.wav")
+    
+    # Audio recording parameters
+    SAMPLE_RATE = 44100  # CD quality (44.1kHz)
+    CHANNELS = 1  # Mono recording
+    
+    print(f"🎤 Recording audio for {duration} seconds...")
+    
+    try:
+        # Record audio using sounddevice (no compilation needed!)
+        recording = sd.rec(
+            int(duration * SAMPLE_RATE), 
+            samplerate=SAMPLE_RATE, 
+            channels=CHANNELS, 
+            dtype='int16'
+        )
+        
+        # Wait until recording is finished
+        sd.wait()
+        
+        print("✅ Recording complete.")
+        
+        # Save the recorded audio as WAV file
+        write(file_path, SAMPLE_RATE, recording)
+        
+        return file_path
+        
+    except Exception as e:
+        print(f"❌ Error recording audio: {e}")
+        return None
+
+
 def system_sleep():
     print("💤 Going to sleep...")
     os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
@@ -228,6 +267,9 @@ def execute_command(cmd_json):
     elif action == "check_battery": return get_battery_status()
     elif action == "check_health": return get_system_health()
     elif action == "system_sleep": system_sleep()
+    elif action == "record_audio": 
+        duration = cmd_json.get("duration", 10)
+        return record_audio(duration)
     
    
     elif action == "open_url": 
