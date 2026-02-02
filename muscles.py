@@ -10,7 +10,8 @@ from scipy.io.wavfile import write
 import numpy as np
 import requests
 import json
-import activity_monitor  
+import activity_monitor
+import clipboard_monitor  # <--- NEW IMPORT ADDED
 
 PROCESS_NAMES = {
     # Browsers
@@ -51,7 +52,7 @@ def get_laptop_location():
     for better accuracy. Tries 3 different APIs and returns the best result.
     """
     try:
-        print("📍 Fetching location from multiple sources...")
+        print("🔍 Fetching location from multiple sources...")
         
         results = []
         
@@ -301,6 +302,130 @@ def get_system_health():
         return f"Error reading system health: {e}"
 
 
+def clear_recycle_bin():
+    """
+    Clears the Windows Recycle Bin permanently.
+    Uses PowerShell command to empty all recycle bins on all drives.
+    """
+    print("🗑️ Clearing Recycle Bin...")
+    
+    try:
+        # PowerShell command to clear recycle bin for all drives
+        ps_command = 'Clear-RecycleBin -Force -ErrorAction SilentlyContinue'
+        
+        # Execute PowerShell command
+        result = os.system(f'powershell -Command "{ps_command}"')
+        
+        if result == 0:
+            print("✅ Recycle Bin cleared successfully!")
+            return "Recycle Bin has been emptied successfully. All deleted files have been permanently removed."
+        else:
+            print("⚠️ Recycle Bin might be already empty or operation completed with warnings.")
+            return "Recycle Bin operation completed. It may have been already empty."
+            
+    except Exception as e:
+        error_msg = f"Error clearing recycle bin: {e}"
+        print(f"❌ {error_msg}")
+        return error_msg
+
+
+def check_storage():
+    """
+    Checks storage space for all available drives on the system.
+    Returns detailed information about each drive including total, used, and free space.
+    """
+    print("💾 Checking storage for all drives...")
+    
+    try:
+        storage_info = []
+        partitions = psutil.disk_partitions()
+        
+        for partition in partitions:
+            # Skip CD/DVD drives and other removable media
+            if 'cdrom' in partition.opts or partition.fstype == '':
+                continue
+                
+            try:
+                usage = psutil.disk_usage(partition.mountpoint)
+                
+                # Convert bytes to GB
+                total_gb = round(usage.total / (1024 ** 3), 2)
+                used_gb = round(usage.used / (1024 ** 3), 2)
+                free_gb = round(usage.free / (1024 ** 3), 2)
+                percent_used = usage.percent
+                
+                # Determine status emoji based on usage
+                if percent_used >= 90:
+                    status_emoji = "🔴"  # Critical
+                elif percent_used >= 75:
+                    status_emoji = "🟡"  # Warning
+                else:
+                    status_emoji = "🟢"  # Good
+                
+                # FIX: Remove backslashes to prevent Markdown parsing errors
+                # invalid: **C:\** (escapes the closing stars)
+                # valid: **C:**
+                safe_drive_name = partition.mountpoint.replace('\\', '')
+                
+                drive_info = {
+                    'drive': safe_drive_name,
+                    'filesystem': partition.fstype,
+                    'total': total_gb,
+                    'used': used_gb,
+                    'free': free_gb,
+                    'percent': percent_used,
+                    'status': status_emoji
+                }
+                
+                storage_info.append(drive_info)
+                
+                print(f"   {status_emoji} {partition.mountpoint} - {percent_used}% used ({free_gb} GB free)")
+                
+            except PermissionError:
+                # Skip drives that we don't have permission to access
+                continue
+            except Exception as e:
+                print(f"   ⚠️ Could not read {partition.mountpoint}: {e}")
+                continue
+        
+        if not storage_info:
+            return "No readable drives found."
+        
+        # Format the response
+        response_lines = ["💾 **Storage Status:**\n"]
+        
+        for drive in storage_info:
+            response_lines.append(
+                f"{drive['status']} **{drive['drive']}** ({drive['filesystem']})\n"
+                f"   Total: {drive['total']} GB\n"
+                f"   Used: {drive['used']} GB ({drive['percent']}%)\n"
+                f"   Free: {drive['free']} GB\n"
+            )
+        
+        # Add summary
+        total_storage = sum(d['total'] for d in storage_info)
+        total_used = sum(d['used'] for d in storage_info)
+        total_free = sum(d['free'] for d in storage_info)
+        avg_percent = round(sum(d['percent'] for d in storage_info) / len(storage_info), 1)
+        
+        response_lines.append(
+            f"\n📊 **Overall Summary:**\n"
+            f"   Total Storage: {round(total_storage, 2)} GB\n"
+            f"   Used: {round(total_used, 2)} GB\n"
+            f"   Free: {round(total_free, 2)} GB\n"
+            f"   Average Usage: {avg_percent}%"
+        )
+        
+        result = "\n".join(response_lines)
+        print("✅ Storage check complete!")
+        return result
+        
+    except Exception as e:
+        error_msg = f"Error checking storage: {e}"
+        print(f"❌ {error_msg}")
+        return error_msg
+
+
 def open_browser(url, browser_name="default"):
     print(f"🌐 Request to open '{url}' in '{browser_name}'")
     
@@ -383,6 +508,8 @@ def execute_command(cmd_json):
     elif action == "record_audio": 
         duration = cmd_json.get("duration", 10)
         return record_audio(duration)
+    elif action == "clear_recycle_bin": return clear_recycle_bin()
+    elif action == "check_storage": return check_storage()
     
     elif action == "open_url": 
         open_browser(cmd_json.get("url"), cmd_json.get("browser", "default"))
@@ -404,3 +531,6 @@ def execute_command(cmd_json):
 
     elif action == "get_activities":
         return activity_monitor.get_current_activities()
+
+    elif action == "get_clipboard_history":
+        return clipboard_monitor.get_clipboard_history()

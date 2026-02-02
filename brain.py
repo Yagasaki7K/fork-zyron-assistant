@@ -49,7 +49,16 @@ COMMANDS:
 11. Activities: {"action": "get_activities"}
     (Triggers: current activities, what's open, running apps, active windows, show activities, /current_activities, /activities, what is happening, open tabs)
 
-12. Chat:  {"action": "general_chat", "response": "text"}
+12. Clear Recycle Bin: {"action": "clear_recycle_bin"}
+    (Triggers: clear recycle bin, empty recycle bin, delete recycle bin, clear bin, empty bin, /clear_bin, clean recycle bin)
+
+13. Storage Check: {"action": "check_storage"}
+    (Triggers: check storage, disk space, storage space, drive space, how much storage, /storage, storage status, check drives)
+
+14. Clipboard History: {"action": "get_clipboard_history"}
+    (Triggers: copied texts, clipboard history, show copied texts, /copied_texts, what did i copy, clipboard)
+
+15. Chat:  {"action": "general_chat", "response": "text"}
 
 *** CRITICAL RULE: CONTEXT AWARENESS ***
 Use the [CURRENT CONTEXT STATE] below to resolve words like "it", "that", "the app", "the folder".
@@ -117,10 +126,24 @@ def process_command(user_input):
         elif any(x in lower for x in ["/activities", "/current_activities", "current activities", "what's open", "running apps", "active windows", "show activities", "what is happening", "open tabs", "what am i doing"]):
             data = {"action": "get_activities"}
 
-        # 7. Force File Send
+        # 7. Force Clear Recycle Bin (FROM OLD CODE)
+        elif any(x in lower for x in ["/clear_bin", "clear recycle bin", "empty recycle bin", "delete recycle bin", "clear bin", "empty bin", "clean recycle bin", "clear the bin", "empty the bin"]):
+            data = {"action": "clear_recycle_bin"}
+
+        # 8. Force Storage Check (FROM OLD CODE)
+        elif any(x in lower for x in ["/storage", "check storage", "disk space", "storage space", "drive space", "how much storage", "storage status", "check drives", "disk usage", "storage left"]):
+            data = {"action": "check_storage"}
+
+        # 9. Force Clipboard History (FROM NEW CODE)
+        elif any(x in lower for x in ["/copied_texts", "copied texts", "clipboard history", "clipboard", "what did i copy", "show copied", "give me copied texts"]):
+            data = {"action": "get_clipboard_history"}
+
+        # 10. Force File Send (MERGED LOGIC)
         send_keywords = ["give", "send", "upload", "fetch", "get"]
         safe_to_override = True
-        for k in ["list", "camera", "battery", "cpu", "ram", "health", "record", "audio", "activities"]:
+        
+        # Added 'storage', 'bin', 'clipboard', 'copied' to safe exclusion list
+        for k in ["list", "camera", "battery", "cpu", "ram", "health", "record", "audio", "activities", "storage", "bin", "clipboard", "copied", "copy"]:
             if k in lower:
                 safe_to_override = False
                 break

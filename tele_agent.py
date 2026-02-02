@@ -2,12 +2,13 @@ import logging
 import asyncio
 import os
 from dotenv import load_dotenv
-from telegram import Update, constants, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
+from telegram import Update, constants, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, CallbackQueryHandler, filters
 from brain import process_command
 from muscles import execute_command, capture_webcam
 import memory
-import activity_monitor  # <--- NEW IMPORT: Needed to format the output text
+import activity_monitor  # Needed to format the output text
+import clipboard_monitor  # <--- NEW IMPORT: For clipboard history
 
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -26,12 +27,14 @@ logging.basicConfig(
 )
 
 def get_main_keyboard():
-    # Added "Activities" button to the layout
+    # Combined keyboard: Includes old buttons + new "/copied_texts"
     keyboard = [
         [KeyboardButton("/screenshot"), KeyboardButton("/sleep")],
-        [KeyboardButton("/activities"), KeyboardButton("/camera_on")], 
+        [KeyboardButton("/camera_off"), KeyboardButton("/camera_on")],
         [KeyboardButton("/batterypercentage"), KeyboardButton("/systemhealth")],
-        [KeyboardButton("/location"), KeyboardButton("/recordaudio")]
+        [KeyboardButton("/location"), KeyboardButton("/recordaudio")],
+        [KeyboardButton("/clear_bin"), KeyboardButton("/storage")], 
+        [KeyboardButton("/activities"), KeyboardButton("/copied_texts")] # <--- ADDED NEW BUTTON
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -41,6 +44,40 @@ async def safe_send_action(bot, chat_id, action):
         await bot.send_chat_action(chat_id=chat_id, action=action)
     except Exception as e:
         print(f"⚠️ Network Warning: Could not send chat action: {e}")
+
+async def handle_clipboard_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle inline button callbacks for clipboard items"""
+    query = update.callback_query
+    await query.answer()
+    
+    # Extract the clipboard index from callback data (format: "copy_0", "copy_1", etc.)
+    try:
+        _, index = query.data.split("_")
+        index = int(index)
+        
+        # Get the clipboard item from the monitor
+        item = clipboard_monitor.get_clipboard_item(index)
+        
+        if item:
+            # Copy to user's clipboard by sending as code block (user can tap to copy)
+            text = item['text']
+            timestamp = item['timestamp']
+            
+            # Send the text with formatting
+            await query.message.reply_text(
+                f"📋 **Copied Text #{index + 1}**\n"
+                f"🕐 {timestamp}\n\n"
+                f"```\n{text}\n```\n\n"
+                f"✅ _Tap the code block above to copy to your clipboard_",
+                parse_mode='Markdown',
+                reply_markup=get_main_keyboard()
+            )
+        else:
+            await query.message.reply_text("❌ Clipboard item not found.", reply_markup=get_main_keyboard())
+            
+    except Exception as e:
+        print(f"Error handling clipboard callback: {e}")
+        await query.message.reply_text(f"❌ Error: {e}", reply_markup=get_main_keyboard())
 
 async def camera_monitor_loop(bot, chat_id):
     global CAMERA_ACTIVE
@@ -100,9 +137,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         command_json = {"action": "record_audio", "duration": 10}
     elif "/location" in lower_text or any(x in lower_text for x in ["my location", "where am i", "laptop location", "where is my laptop", "find location"]):
         command_json = {"action": "get_location"}
-    # Added explicit check for activities command
+    # --- EXISTING BUTTON TRIGGERS ---
+    elif "/clear_bin" in lower_text or "clear bin" in lower_text:
+        command_json = {"action": "clear_recycle_bin"}
+    elif "/storage" in lower_text or "check storage" in lower_text:
+        command_json = {"action": "check_storage"}
     elif "/activities" in lower_text or "activities" in lower_text:
         command_json = {"action": "get_activities"}
+    # --- NEW CLIPBOARD TRIGGER ---
+    elif "/copied_texts" in lower_text or any(x in lower_text for x in ["copied texts", "clipboard history", "what did i copy", "show copied"]):
+        command_json = {"action": "get_clipboard_history"}
 
     # Show processing message (with error handling)
     status_msg = None
@@ -126,7 +170,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if command_json:
         action = command_json.get('action')
         
-        # --- NEW: ACTIVITIES HANDLER ---
+        # --- ACTIVITIES HANDLER (Supports splitting messages) ---
         if action == "get_activities":
             if status_msg: await status_msg.delete()
             # 1. Get raw data from muscles (which calls activity_monitor)
@@ -135,27 +179,89 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if raw_data:
                 # 2. Format the data using the helper function in activity_monitor
                 formatted_message = activity_monitor.format_activities_text(raw_data)
-                # 3. Send the nicely formatted text
+                
+                # 3. Send the formatted text - handle both single message and multiple messages
                 try:
-                    await update.message.reply_text(formatted_message, parse_mode='Markdown', reply_markup=get_main_keyboard())
+                    if isinstance(formatted_message, list):
+                        # Multiple messages - send each one
+                        for i, msg in enumerate(formatted_message):
+                            await update.message.reply_text(
+                                msg, 
+                                parse_mode='Markdown', 
+                                reply_markup=get_main_keyboard() if i == len(formatted_message) - 1 else None
+                            )
+                            # Small delay between messages to avoid rate limiting
+                            if i < len(formatted_message) - 1:
+                                await asyncio.sleep(0.5)
+                    else:
+                        # Single message
+                        await update.message.reply_text(formatted_message, parse_mode='Markdown', reply_markup=get_main_keyboard())
                 except Exception as e:
                     await update.message.reply_text(f"❌ Error displaying activities: {e}", reply_markup=get_main_keyboard())
             else:
                 await update.message.reply_text("❌ Could not fetch activities.", reply_markup=get_main_keyboard())
 
+        # --- NEW: CLIPBOARD HISTORY HANDLER ---
+        elif action == "get_clipboard_history":
+            if status_msg: await status_msg.delete()
+            
+            # Get clipboard history from muscles -> clipboard_monitor
+            clipboard_items = execute_command(command_json)
+            
+            if clipboard_items and len(clipboard_items) > 0:
+                # Create inline keyboard with copy buttons for each item
+                keyboard = []
+                
+                # Show up to 20 items
+                for i, item in enumerate(clipboard_items[:20]):
+                    text = item['text']
+                    # Truncate text for button label
+                    if len(text) > 50:
+                        button_text = text[:47] + "..."
+                    else:
+                        button_text = text
+                    
+                    # Replace newlines for button display
+                    button_text = button_text.replace('\n', ' ').replace('\r', '')
+                    
+                    # Create button with callback data
+                    keyboard.append([InlineKeyboardButton(
+                        f"{i+1}. {button_text}",
+                        callback_data=f"copy_{i}"
+                    )])
+                
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                # Send message with buttons
+                await update.message.reply_text(
+                    f"📋 **CLIPBOARD HISTORY**\n\n"
+                    f"Found {len(clipboard_items)} copied items.\n"
+                    f"Tap any item below to view and copy it:\n",
+                    parse_mode='Markdown',
+                    reply_markup=reply_markup
+                )
+            else:
+                await update.message.reply_text(
+                    "📋 **CLIPBOARD HISTORY**\n\n"
+                    "❌ No copied texts found yet.\n"
+                    "Copy some text on your desktop and try again!",
+                    parse_mode='Markdown',
+                    reply_markup=get_main_keyboard()
+                )
+
         # --- LOCATION TRACKING ---
         elif action == "get_location":
             if status_msg: await status_msg.delete()
-            loader = await update.message.reply_text("📍 Checking multiple location sources...", reply_markup=get_main_keyboard())
+            loader = await update.message.reply_text("🔍 Checking multiple location sources...", reply_markup=get_main_keyboard())
             
             # Get location data
             location_data = execute_command(command_json)
             
             if location_data:
                 # Format location message
-                location_text = f"""📍 **Laptop Location**
+                location_text = f"""🌍 **Laptop Location**
 
-🌍 **Location:** {location_data['city']}, {location_data['region']}
+🌆 **Location:** {location_data['city']}, {location_data['region']}
 🏳️ **Country:** {location_data['country']} ({location_data['country_code']})
 📮 **Postal Code:** {location_data['postal']}
 🌐 **IP Address:** {location_data['ip']}
@@ -270,7 +376,19 @@ Longitude: {location_data['longitude']}
             # AI chat response
             if status_msg: await status_msg.delete()
             await update.message.reply_text(f"💬 {response}", reply_markup=get_main_keyboard())
-            
+
+        # --- RECYCLE BIN & STORAGE HANDLERS ---
+        elif action == "clear_recycle_bin":
+            result = execute_command(command_json)
+            if status_msg: await status_msg.delete()
+            await update.message.reply_text(f"🗑️ {result}", reply_markup=get_main_keyboard())
+
+        elif action == "check_storage":
+            result = execute_command(command_json)
+            if status_msg: await status_msg.delete()
+            await update.message.reply_text(result, parse_mode='Markdown', reply_markup=get_main_keyboard())
+        # --------------------------------------
+
         # --- File / App Handling ---
         elif action == "list_files":
             if status_msg: await status_msg.delete()
@@ -294,7 +412,6 @@ Longitude: {location_data['longitude']}
              if os.path.exists(raw_path):
                  try:
                      await update.message.reply_text("📤 Uploading...", reply_markup=get_main_keyboard())
-                     # SAFE UPLOAD: Tries to upload, catches errors if file is too big or net is slow
                      await update.message.reply_document(open(raw_path, 'rb'))
                  except Exception as e:
                      print(f"Upload Error: {e}")
@@ -317,8 +434,12 @@ if __name__ == "__main__":
     try:
         # Increase connection timeout to handle slow uploads better
         application = ApplicationBuilder().token(TOKEN).read_timeout(60).write_timeout(60).build()
+        
+        # Add handlers
         application.add_handler(CommandHandler("start", start_command))
+        application.add_handler(CallbackQueryHandler(handle_clipboard_callback)) # NEW: Clipboard handler
         application.add_handler(MessageHandler(filters.TEXT | filters.COMMAND, handle_message))
+        
         application.run_polling()
     except Exception as e:
         print(f"❌ Critical Error: {e}")
