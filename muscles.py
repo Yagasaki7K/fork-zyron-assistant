@@ -8,6 +8,9 @@ import shutil
 import sounddevice as sd
 from scipy.io.wavfile import write
 import numpy as np
+import requests
+import json
+import activity_monitor  
 
 PROCESS_NAMES = {
     # Browsers
@@ -42,6 +45,117 @@ PROCESS_NAMES = {
     "zoom": "Zoom.exe"
 }
 
+def get_laptop_location():
+    """
+    Gets the approximate location of the laptop using multiple IP geolocation services
+    for better accuracy. Tries 3 different APIs and returns the best result.
+    """
+    try:
+        print("📍 Fetching location from multiple sources...")
+        
+        results = []
+        
+        try:
+            print("   → Checking ipapi.co...")
+            response = requests.get('https://ipapi.co/json/', timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                results.append({
+                    'source': 'ipapi.co',
+                    'ip': data.get('ip', 'Unknown'),
+                    'city': data.get('city', 'Unknown'),
+                    'region': data.get('region', 'Unknown'),
+                    'country': data.get('country_name', 'Unknown'),
+                    'country_code': data.get('country_code', 'Unknown'),
+                    'postal': data.get('postal', 'Unknown'),
+                    'latitude': data.get('latitude', 0),
+                    'longitude': data.get('longitude', 0),
+                    'timezone': data.get('timezone', 'Unknown'),
+                    'org': data.get('org', 'Unknown'),
+                })
+                print(f"      ✓ Found: {data.get('city', 'Unknown')}")
+        except Exception as e:
+            print(f"      ✗ ipapi.co failed: {e}")
+        
+        try:
+            print("   → Checking ip-api.com...")
+            response = requests.get('http://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query', timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status') == 'success':
+                    results.append({
+                        'source': 'ip-api.com',
+                        'ip': data.get('query', 'Unknown'),
+                        'city': data.get('city', 'Unknown'),
+                        'region': data.get('regionName', 'Unknown'),
+                        'country': data.get('country', 'Unknown'),
+                        'country_code': data.get('countryCode', 'Unknown'),
+                        'postal': data.get('zip', 'Unknown'),
+                        'latitude': data.get('lat', 0),
+                        'longitude': data.get('lon', 0),
+                        'timezone': data.get('timezone', 'Unknown'),
+                        'org': data.get('isp', 'Unknown'),
+                    })
+                    print(f"      ✓ Found: {data.get('city', 'Unknown')}")
+        except Exception as e:
+            print(f"      ✗ ip-api.com failed: {e}")
+        
+        try:
+            print("   → Checking ipinfo.io...")
+            response = requests.get('https://ipinfo.io/json', timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                loc = data.get('loc', '0,0').split(',')
+                results.append({
+                    'source': 'ipinfo.io',
+                    'ip': data.get('ip', 'Unknown'),
+                    'city': data.get('city', 'Unknown'),
+                    'region': data.get('region', 'Unknown'),
+                    'country': data.get('country', 'Unknown'),
+                    'country_code': data.get('country', 'Unknown'),
+                    'postal': data.get('postal', 'Unknown'),
+                    'latitude': float(loc[0]) if len(loc) > 0 else 0,
+                    'longitude': float(loc[1]) if len(loc) > 1 else 0,
+                    'timezone': data.get('timezone', 'Unknown'),
+                    'org': data.get('org', 'Unknown'),
+                })
+                print(f"      ✓ Found: {data.get('city', 'Unknown')}")
+        except Exception as e:
+            print(f"      ✗ ipinfo.io failed: {e}")
+        
+        if not results:
+            print("❌ All location APIs failed")
+            return None
+        
+        best_result = None
+        for result in results:
+            if result['source'] == 'ip-api.com':  
+                best_result = result
+                break
+        
+        if not best_result:
+            best_result = results[0] 
+        
+       
+        if len(results) > 1:
+            comparison = "\n".join([f"   • {r['source']}: {r['city']}, {r['region']}" for r in results])
+            best_result['comparison'] = comparison
+        else:
+            best_result['comparison'] = None
+        
+       
+        lat = best_result['latitude']
+        lon = best_result['longitude']
+        best_result['maps_url'] = f"https://www.google.com/maps?q={lat},{lon}"
+        
+        print(f"✅ Best location: {best_result['city']}, {best_result['region']} (from {best_result['source']})")
+        return best_result
+            
+    except Exception as e:
+        print(f"❌ Error getting location: {e}")
+        return None
+
+
 def get_browser_path(browser_name):
     """Finds browser executable dynamically without hardcoded paths."""
     browser_name = browser_name.lower().strip()
@@ -60,11 +174,11 @@ def get_browser_path(browser_name):
     executable = exes.get(browser_name, f"{browser_name}.exe")
     if not executable.endswith(".exe"): executable += ".exe"
     
-  
+   
     path = shutil.which(executable)
     if path: return path
     
-   
+    
     possible_roots = [
         os.environ.get("PROGRAMFILES"), 
         os.environ.get("PROGRAMFILES(X86)"),
@@ -92,7 +206,7 @@ def get_browser_path(browser_name):
 def capture_webcam():
     print("📸 Accessing Webcam...")
     try:
-      
+       
         for i in range(2):
             cam = cv2.VideoCapture(i)
             if cam.isOpened():
@@ -128,26 +242,25 @@ def record_audio(duration=10):
     file_path = os.path.join(os.getcwd(), "audio_recording.wav")
     
     # Audio recording parameters
-    SAMPLE_RATE = 44100  # CD quality (44.1kHz)
-    CHANNELS = 1  # Mono recording
+    SAMPLE_RATE = 44100 
+    CHANNELS = 1 
     
     print(f"🎤 Recording audio for {duration} seconds...")
     
     try:
-        # Record audio using sounddevice (no compilation needed!)
+     
         recording = sd.rec(
             int(duration * SAMPLE_RATE), 
             samplerate=SAMPLE_RATE, 
             channels=CHANNELS, 
             dtype='int16'
         )
-        
-        # Wait until recording is finished
+      
         sd.wait()
         
         print("✅ Recording complete.")
         
-        # Save the recorded audio as WAV file
+       
         write(file_path, SAMPLE_RATE, recording)
         
         return file_path
@@ -192,12 +305,12 @@ def open_browser(url, browser_name="default"):
     print(f"🌐 Request to open '{url}' in '{browser_name}'")
     
     try:
-      
+       
         if not browser_name or browser_name.lower() == "default":
             webbrowser.open(url)
             return
 
-       
+        
         path = get_browser_path(browser_name)
         
         if path:
@@ -214,7 +327,7 @@ def open_browser(url, browser_name="default"):
         webbrowser.open(url)
 
 def close_application(app_name):
-    
+   
     clean_name = app_name.lower()
     for word in ["the ", "app ", "application ", "close ", "open "]:
         clean_name = clean_name.replace(word, "")
@@ -230,7 +343,6 @@ def close_application(app_name):
         
     print(f"💀 Killing process target: {exe_name}")
     
-
     try:
         os.system(f"taskkill /f /im {exe_name} /t")
     except Exception as e:
@@ -266,12 +378,12 @@ def execute_command(cmd_json):
     elif action == "camera_stream" or action == "camera_snap": return capture_webcam()
     elif action == "check_battery": return get_battery_status()
     elif action == "check_health": return get_system_health()
+    elif action == "get_location": return get_laptop_location() 
     elif action == "system_sleep": system_sleep()
     elif action == "record_audio": 
         duration = cmd_json.get("duration", 10)
         return record_audio(duration)
     
-   
     elif action == "open_url": 
         open_browser(cmd_json.get("url"), cmd_json.get("browser", "default"))
         
@@ -289,3 +401,6 @@ def execute_command(cmd_json):
         val = cmd_json.get("value")
         if feature == "brightness": set_brightness(val)
     elif action == "open_file": open_file_path(cmd_json.get("path"))
+
+    elif action == "get_activities":
+        return activity_monitor.get_current_activities()

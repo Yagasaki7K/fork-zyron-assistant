@@ -46,7 +46,10 @@ COMMANDS:
 10. Audio Record: {"action": "record_audio", "duration": 10}
     (Triggers: record audio, capture audio, /recordaudio)
 
-11. Chat:  {"action": "general_chat", "response": "text"}
+11. Activities: {"action": "get_activities"}
+    (Triggers: current activities, what's open, running apps, active windows, show activities, /current_activities, /activities, what is happening, open tabs)
+
+12. Chat:  {"action": "general_chat", "response": "text"}
 
 *** CRITICAL RULE: CONTEXT AWARENESS ***
 Use the [CURRENT CONTEXT STATE] below to resolve words like "it", "that", "the app", "the folder".
@@ -110,10 +113,14 @@ def process_command(user_input):
         elif "/recordaudio" in lower or "record audio" in lower:
             data = {"action": "record_audio", "duration": 10}
 
-        # 6. Force File Send
+        # 6. Force Activity Check
+        elif any(x in lower for x in ["/activities", "/current_activities", "current activities", "what's open", "running apps", "active windows", "show activities", "what is happening", "open tabs", "what am i doing"]):
+            data = {"action": "get_activities"}
+
+        # 7. Force File Send
         send_keywords = ["give", "send", "upload", "fetch", "get"]
         safe_to_override = True
-        for k in ["list", "camera", "battery", "cpu", "ram", "health", "record", "audio"]:
+        for k in ["list", "camera", "battery", "cpu", "ram", "health", "record", "audio", "activities"]:
             if k in lower:
                 safe_to_override = False
                 break

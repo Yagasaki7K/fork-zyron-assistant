@@ -7,7 +7,7 @@
 <img src="https://img.shields.io/badge/AI-Ollama-000000.svg" alt="AI">
 <img src="https://img.shields.io/badge/Privacy-100%25%20Local-success.svg" alt="Privacy">
 <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
-<img src="https://img.shields.io/badge/Version-1.1-brightgreen.svg" alt="Version">
+<img src="https://img.shields.io/badge/Version-1.2-brightgreen.svg" alt="Version">
 
 **An intelligent, privacy-first desktop assistant that controls your PC via Telegram or Voice**
 
@@ -25,13 +25,11 @@ Zyron Desktop Assistant transforms your Windows PC into an intelligent, voice-co
 
 ### Why Zyron?
 
-```
-✅ Complete Privacy       → All processing happens on your machine
-✅ Voice + Remote Control → "Hey Zyron" or Telegram commands
-✅ Zero Subscriptions     → No OpenAI, no monthly fees
-✅ Enterprise Security    → Bank-grade local execution
-✅ Extensible & Modern    → Python-based, easy to customize
-```
+- ✅ **Complete Privacy** → All processing happens on your machine
+- ✅ **Voice + Remote Control** → "Hey Zyron" or Telegram commands
+- ✅ **Zero Subscriptions** → No OpenAI, no monthly fees
+- ✅ **Enterprise Security** → Bank-grade local execution
+- ✅ **Extensible & Modern** → Python-based, easy to customize
 
 ---
 
@@ -57,8 +55,9 @@ Zyron Desktop Assistant transforms your Windows PC into an intelligent, voice-co
 - **📸 Screenshot & Webcam** - Visual monitoring
 - **🔋 Health Monitor** - Battery, RAM, CPU, Disk
 - **📂 File Manager** - Browse & download files
-- **🌐 Browser Automation** - Launch sites instantly
 - **🎵 Audio Capture** - 10-second recordings sent to Telegram
+- **📊 Activity Monitor** - Track open tabs & apps
+- **📍 Location Tracker** - (NEW) IP-based location tracking
 
 </td>
 </tr>
@@ -66,20 +65,25 @@ Zyron Desktop Assistant transforms your Windows PC into an intelligent, voice-co
 
 ### 💬 Example Commands
 
+**Telegram:**
 ```
-Telegram:
-  "Open Chrome"           → Launches browser
-  "Take a screenshot"     → Captures & sends image
-  "System status"         → RAM, CPU, Battery report
-  "Sleep"                 → Puts PC to sleep
-  "List my documents"     → Shows files in Documents
-  "Record audio"          → Records 10s desktop + mic audio
+"Open Chrome"           → Launches browser
+"Take a screenshot"     → Captures & sends image
+"System status"         → RAM, CPU, Battery report
+"Sleep"                 → Puts PC to sleep
+"List my documents"     → Shows files in Documents
+"Record audio"          → Records 10s desktop + mic audio
+"Show activities"       → Lists open tabs and apps
+"Location"              → Shows IP-based location (city, region, country)
+```
 
-Voice:
-  "Hey Zyron, open Spotify"
-  "Hey Zyron, what's my battery level?"
-  "Hey Zyron, take a screenshot"
-  "Hey Zyron, record audio"
+**Voice:**
+```
+"Hey Zyron, open Spotify"
+"Hey Zyron, what's my battery level?"
+"Hey Zyron, take a screenshot"
+"Hey Zyron, what am I doing?"
+"Hey Zyron, where am I?"
 ```
 
 ---
@@ -178,7 +182,7 @@ MAX_TOKENS=2048
 
 #### 4. Get Telegram Bot Token
 
-1. Open Telegram and search for [@BotFather](https://t.me/BotFather)
+1. Open Telegram and search for @BotFather
 2. Send `/newbot` and follow instructions
 3. Copy the token and paste it in `.env`
 
@@ -194,26 +198,37 @@ run_silent.vbs
 
 </details>
 
+### 🧩 Activities Feature Setup (New)
+
+To enable full tracking of **Browser Tabs (URLs)**, you must install the local browser extension.
+
+1. Open Chrome / Brave / Edge.
+2. Go to `chrome://extensions`.
+3. Enable **Developer Mode** (top right switch).
+4. Click **Load Unpacked**.
+5. Select the `browser_extension` folder inside your `zyron-assistant` directory.
+6. Done! Zyron can now see exactly which websites you are visiting.
+
 ---
 
 ## ⚙️ Configuration
 
 ### Telegram Bot Setup
 
-1. **Create Bot:**
-   - Message [@BotFather](https://t.me/BotFather) on Telegram
-   - Send `/newbot`
-   - Choose a name: `My Zyron Assistant`
-   - Choose a username: `myzyron_bot` (must end with `_bot`)
+**Create Bot:**
+1. Message @BotFather on Telegram
+2. Send `/newbot`
+3. Choose a name: `My Zyron Assistant`
+4. Choose a username: `myzyron_bot` (must end with `_bot`)
 
-2. **Get Token:**
-   - BotFather will give you a token like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
-   - Copy this token
+**Get Token:**
+1. BotFather will give you a token like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
+2. Copy this token
 
-3. **Configure:**
-   - Open `.env` file
-   - Replace `TELEGRAM_TOKEN=your_bot_token_here` with your actual token
-   - Save and restart the assistant
+**Configure:**
+1. Open `.env` file
+2. Replace `TELEGRAM_TOKEN=your_bot_token_here` with your actual token
+3. Save and restart the assistant
 
 ### Voice Control Setup
 
@@ -246,7 +261,7 @@ setup.bat  # Re-run installer
 
 ### Starting the Assistant
 
-**After installation, you have 3 options:**
+After installation, you have 3 options:
 
 ```bash
 # 1. Auto-start (after reboot)
@@ -257,12 +272,12 @@ run_silent.vbs
 
 # 3. Visible console mode (for debugging)
 venv\Scripts\activate
-python main.py
+start_pikachu.bat
 ```
 
 ### Basic Commands
 
-#### System Control
+**System Control**
 ```
 /open [app]      → Launch application
 /shutdown        → Shutdown PC
@@ -271,29 +286,32 @@ python main.py
 /lock            → Lock screen
 ```
 
-#### Information
+**Information**
 ```
 /status          → System health (CPU, RAM, Battery)
 /battery         → Battery percentage
 /screenshot      → Capture screen
 /webcam          → Take webcam photo
+/activities      → Show running apps & tabs (NEW)
+/location        → Show IP-based location (city, region, country)
+                   Note: Accuracy improves with future updates
 ```
 
-#### File Management
+**File Management**
 ```
 /files           → List files in current directory
 /download [path] → Download file to Telegram
 /upload          → Upload file from Telegram to PC
 ```
 
-#### Audio Recording (NEW in v1.1)
+**Audio Recording (NEW in v1.1)**
 ```
 /record          → Record 10s desktop + mic audio
                    Captures system sounds and environment
                    Sent to Telegram within ~1 minute
 ```
 
-#### AI Assistant
+**AI Assistant**
 ```
 /ask [question]  → Ask the AI anything
 /help            → Show all commands
@@ -307,8 +325,8 @@ Activate with wake word, then speak:
 ```
 "Hey Zyron, open Chrome"
 "Hey Zyron, what's my battery level?"
-"Hey Zyron, lock my computer"
 "Hey Zyron, take a screenshot"
+"Hey Zyron, show me current activities"
 "Hey Zyron, record audio"
 ```
 
@@ -360,8 +378,8 @@ LOG_LEVEL=ERROR    # Only errors
 <summary><b>"Python not found" error</b></summary>
 
 **Solution:**
-1. Reinstall Python from [python.org](https://www.python.org/downloads/)
-2. **Check "Add Python to PATH"** during installation
+1. Reinstall Python from python.org
+2. Check "Add Python to PATH" during installation
 3. Restart your terminal
 4. Verify: `python --version`
 
@@ -371,7 +389,7 @@ LOG_LEVEL=ERROR    # Only errors
 <summary><b>"Ollama not found" error</b></summary>
 
 **Solution:**
-1. Install Ollama from [ollama.com](https://ollama.com/)
+1. Install Ollama from ollama.com
 2. Verify: `ollama --version`
 3. Pull model: `ollama pull qwen2.5-coder:7b`
 
@@ -400,13 +418,12 @@ LOG_LEVEL=ERROR    # Only errors
 </details>
 
 <details>
-<summary><b>Audio recording not working</b></summary>
+<summary><b>Activities showing "N/A" URLs</b></summary>
 
 **Solution:**
-1. Install required audio dependencies: `pip install pyaudio sounddevice`
-2. Check Windows sound settings (both desktop and microphone enabled)
-3. Verify sufficient disk space for temporary audio files
-4. Ensure Telegram bot has file upload permissions
+1. Ensure the browser extension is installed (see Setup section).
+2. Ensure you are using a supported browser (Chrome, Brave, Edge).
+3. If installed, try reloading the extension in `chrome://extensions`.
 
 </details>
 
@@ -429,6 +446,12 @@ zyron-assistant/
 ├── 📄 start_zyron.bat         # Quick start script
 ├── 📄 tele_agent.py           # Telegram bot handler
 ├── 📄 test_mic.py             # Microphone testing utility
+├── 📄 activity_monitor.py     # (NEW) Activity tracking module
+├── 📂 browser_extension/      # (NEW) Chrome extension files
+│   ├── 📄 manifest.json
+│   ├── 📄 background.js
+│   ├── 📄 popup.html
+│   └── 📄 popup.js
 ├── 📄 .env                    # Environment config (create this)
 └── 📂 venv/                   # Virtual environment (auto-created)
 ```
@@ -437,45 +460,44 @@ zyron-assistant/
 
 | File | Purpose |
 |------|---------|
-| **brain.py** | Core AI engine powered by Ollama (qwen2.5-coder:7b) |
-| **listener.py** | Voice wake word detection ("Hey Zyron") |
-| **tele_agent.py** | Telegram bot integration for remote control |
-| **muscles.py** | System control (apps, screenshots, files, battery, audio) |
-| **memory.py** | Conversation context & chat history management |
-| **main.py** | Application orchestrator & startup logic |
-| **setup.bat** | One-click installer with progress animations |
-| **run_silent.vbs** | Background launcher (stealth mode) |
-| **start_zyron.bat** | Quick start without installation |
-| **test_mic.py** | Diagnostic tool for microphone testing |
+| `brain.py` | Core AI engine powered by Ollama (qwen2.5-coder:7b) |
+| `listener.py` | Voice wake word detection ("Hey Zyron") |
+| `tele_agent.py` | Telegram bot integration for remote control |
+| `muscles.py` | System control (apps, screenshots, files, battery, audio) |
+| `memory.py` | Conversation context & chat history management |
+| `activity_monitor.py` | (NEW) Tracks running apps and browser tabs |
+| `browser_extension/` | (NEW) Extension source code for URL tracking |
+| `setup.bat` | One-click installer with progress animations |
+| `run_silent.vbs` | Background launcher (stealth mode) |
+| `test_mic.py` | Diagnostic tool for microphone testing |
 
 ---
 
-## 🆕 What's New in v1.1
+## 🆕 What's New in v1.2
 
 ### Major Updates
 
-🎉 **Brand Refresh**: Pikachu is now **Zyron** - A more professional name for your desktop assistant
+**🎉 Activities Monitor:** Zyron can now "see" what you are doing!
+- Detects **Open Browser Tabs** with full URLs (via Extension)
+- Detects **Running Desktop Apps** (VS Code, Spotify, Discord, etc.)
+- Detects **System Resource Usage** (CPU/RAM)
+- Command: `/activities` or "Hey Zyron, show activities"
 
-🚀 **Auto-Start on Boot**: Zyron now automatically starts when Windows boots
-- Runs in stealth mode by default
-- No console window or taskbar interruption
-- Configured automatically during installation
-- Can be disabled/enabled via Windows Startup folder
-
-🎙️ **Audio Recorder Feature**: New audio capture capability
-- Records **10 seconds** of combined audio:
+**🎙️ Audio Recorder Feature:**
+- Records 10 seconds of combined audio:
   - Desktop audio (system sounds, music, videos)
   - Environment audio (microphone input)
 - Automatically processes and sends to your Telegram bot
-- Delivery within **~1 minute** of recording
-- Perfect for monitoring, logging, or capturing important moments
-- Command: `/record` or "Hey Zyron, record audio"
 
-### Technical Improvements
-- Enhanced installer now configures auto-start automatically
-- Improved stealth mode stability
-- Better error handling for audio devices
-- Optimized audio processing pipeline
+**📍 Location Tracking:** Track your laptop's location remotely!
+- Shows approximate location based on IP address
+- Displays city, region, and country information
+- Command: `/location` or "Hey Zyron, where am I?"
+- Note: Accuracy improves over time with updates
+
+**🚀 Auto-Start on Boot:** Zyron now automatically starts when Windows boots
+- Runs in stealth mode by default
+- Configured automatically during installation
 
 ---
 
@@ -483,11 +505,11 @@ zyron-assistant/
 
 Contributions are welcome! Here's how you can help:
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/AmazingFeature`
-3. **Commit** your changes: `git commit -m 'Add AmazingFeature'`
-4. **Push** to the branch: `git push origin feature/AmazingFeature`
-5. **Open** a Pull Request
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/AmazingFeature`
+3. Commit your changes: `git commit -m 'Add AmazingFeature'`
+4. Push to the branch: `git push origin feature/AmazingFeature`
+5. Open a Pull Request
 
 ### Development Setup
 
@@ -526,19 +548,19 @@ A: Yes! Any Ollama-compatible model works. Edit `MODEL_NAME` in `.env`.
 A: For remote control, yes. Voice-only mode coming soon.
 
 **Q: Can I contribute?**  
-A: Absolutely! See [Contributing](#-contributing) section.
+A: Absolutely! See Contributing section.
 
 **Q: Does auto-start slow down my PC boot time?**  
 A: No. Zyron launches in the background after Windows loads, using minimal resources.
 
-**Q: What audio formats does the recorder support?**  
-A: Recordings are saved as WAV files and automatically converted for Telegram upload.
+**Q: How do I remove the Activities feature?**  
+A: Simply uninstall the browser extension and delete `activity_monitor.py`.
 
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ```
 MIT License - Free to use, modify, and distribute
@@ -549,10 +571,10 @@ MIT License - Free to use, modify, and distribute
 
 ## 🙏 Acknowledgments
 
-- **[Ollama](https://ollama.com/)** - Local AI infrastructure
-- **[Qwen Team](https://github.com/QwenLM/Qwen)** - Qwen 2.5 Coder model
-- **[python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)** - Telegram integration
-- **Community contributors** - Thank you! ⚡
+- [Ollama](https://ollama.com/) - Local AI infrastructure
+- [Qwen Team](https://qwenlm.github.io/) - Qwen 2.5 Coder model
+- [python-telegram-bot](https://python-telegram-bot.org/) - Telegram integration
+- Community contributors - Thank you! ⚡
 
 ---
 
@@ -560,16 +582,17 @@ MIT License - Free to use, modify, and distribute
 
 Need help? We've got you covered:
 
-- 📖 **Documentation:** [Wiki](https://github.com/Surajkumar5050/zyron-assistant/tree/main/docs)
-- 🐛 **Bug Reports:** [Issues](https://github.com/Surajkumar5050/zyron-assistant/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/Surajkumar5050/zyron-assistant/issues)
-- ⭐ **Star this repo** if you find it useful!
+- 📖 **Documentation:** [Wiki](https://github.com/YOUR_USERNAME/zyron-assistant/wiki)
+- 🐛 **Bug Reports:** [Issues](https://github.com/YOUR_USERNAME/zyron-assistant/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/YOUR_USERNAME/zyron-assistant/discussions)
 
 ---
 
 <div align="center">
 
-**Made with ⚡ and ❤️**
+**⭐ Star this repo if you find it useful!**
+
+Made with ⚡ and ❤️
 
 If this project helped you, consider giving it a ⭐ star!
 

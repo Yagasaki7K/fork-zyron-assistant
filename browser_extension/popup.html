@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pikachu Activity Monitor</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 15px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .status {
+      background: rgba(255,255,255,0.2);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    
+    .tabs-container {
+      max-height: 300px;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    
+    .tab-item {
+      background: rgba(255,255,255,0.2);
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 5px;
+      font-size: 12px;
+      word-wrap: break-word;
+    }
+    
+    .tab-title {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    
+    .tab-url {
+      color: #e0e0e0;
+      font-size: 11px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    button:hover {
+      background: #45a049;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 11px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>⚡ Pikachu Monitor</h1>
+  </div>
+  
+  <div class="status">
+    <div class="status-item">
+      <span>🌐 Total Tabs:</span>
+      <span id="tabCount">0</span>
+    </div>
+    <div class="status-item">
+      <span>🪟 Windows:</span>
+      <span id="windowCount">0</span>
+    </div>
+    <div class="status-item">
+      <span>✅ Status:</span>
+      <span id="status">Active</span>
+    </div>
+  </div>
+  
+  <button id="refreshBtn">🔄 Refresh Tabs</button>
+  
+  <div class="tabs-container" id="tabsList">
+    <div style="text-align: center; opacity: 0.7;">Loading tabs...</div>
+  </div>
+  
+  <div class="footer">
+    Pikachu Desktop Assistant v1.0<br>
+    Extension is active and monitoring
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
