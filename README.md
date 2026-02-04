@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="header.png" alt="ZYRON Assistant Header" width="100%">
+<img src="markdown_themes/header.png" alt="ZYRON Assistant Header" width="100%">
 
 <h1>🤖 ZYRON Desktop Assistant</h1>
 
