@@ -66,6 +66,10 @@ COMMANDS:
 17. Browser Control: {"action": "browser_control", "command": "close/mute", "query": "which tab"}
     (Triggers: "close youtube tab", "mute spotify", "close the video about AI")
 
+18. Power Control: 
+    - Shutdown: {"action": "shutdown_pc"} (Triggers: shutdown, turn off computer, kill power)
+    - Restart:  {"action": "restart_pc"}  (Triggers: restart, reboot, cycle power)
+
 *** CRITICAL RULE: CONTEXT AWARENESS ***
 Use the [CURRENT CONTEXT STATE] below to resolve words like "it", "that", "the app", "the folder".
 - If user says "Close it" and Last Focused Tab is "YouTube" -> {"action": "browser_control", "command": "close", "query": "YouTube"} (PRIORITY over close_app)
@@ -110,6 +114,10 @@ def process_command(user_input):
         # 2. Force Sleep/Screenshot/Battery
         elif "/sleep" in lower: 
             data = {"action": "system_sleep"}
+        elif "/shutdown" in lower:
+            data = {"action": "shutdown_pc"}
+        elif "/restart" in lower:
+            data = {"action": "restart_pc"}
         elif ("/screenshot" in lower or "screenshot" in lower) and not ("tab" in lower or "browser" in lower): 
             data = {"action": "take_screenshot"}
         elif "battery" in lower: 

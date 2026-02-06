@@ -276,6 +276,18 @@ def system_sleep():
     print("💤 Going to sleep...")
     os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
 
+def shutdown_pc():
+    """Immediately shuts down the computer."""
+    print("🔌 System Shutdown Initiated...")
+    # /s = shutdown, /t 0 = time 0 seconds
+    os.system("shutdown /s /t 0")
+
+def restart_pc():
+    """Immediately restarts the computer."""
+    print("🔄 System Restart Initiated...")
+    # /r = restart, /t 0 = time 0 seconds
+    os.system("shutdown /r /t 0")
+
 
 def get_battery_status():
     try:
@@ -609,6 +621,8 @@ def execute_command(cmd_json):
     elif action == "check_health": return get_system_health()
     elif action == "get_location": return get_laptop_location() 
     elif action == "system_sleep": system_sleep()
+    elif action == "shutdown_pc": shutdown_pc()
+    elif action == "restart_pc": restart_pc()
     elif action == "record_audio": 
         duration = cmd_json.get("duration", 10)
         return record_audio(duration)

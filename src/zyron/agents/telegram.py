@@ -58,13 +58,13 @@ logging.basicConfig(
 def get_main_keyboard():
     # Combined keyboard: Includes old buttons + new "/copied_texts"
     keyboard = [
-        [KeyboardButton("/screenshot"), KeyboardButton("/sleep")],
-        [KeyboardButton("/camera_off"), KeyboardButton("/camera_on")],
+        [KeyboardButton("/screenshot"), KeyboardButton("/camera_on"), KeyboardButton("/camera_off")],
+        [KeyboardButton("/sleep"), KeyboardButton("/restart"), KeyboardButton("/shutdown")], # <--- NEW ROW
         [KeyboardButton("/batterypercentage"), KeyboardButton("/systemhealth")],
         [KeyboardButton("/location"), KeyboardButton("/recordaudio")],
         [KeyboardButton("/clear_bin"), KeyboardButton("/storage")], 
         [KeyboardButton("/activities"), KeyboardButton("/copied_texts")],
-        [KeyboardButton("/focus_mode_on"), KeyboardButton("/blacklist")] # <--- NEW FOCUS MODE BUTTONS
+        [KeyboardButton("/focus_mode_on"), KeyboardButton("/blacklist")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -162,6 +162,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         command_json = {"action": "take_screenshot"}
     elif "/sleep" in lower_text:
         command_json = {"action": "system_sleep"}
+    elif "/shutdown" in lower_text or "shutdown" in lower_text:
+        command_json = {"action": "shutdown_pc"}
+    elif "/restart" in lower_text or "restart" in lower_text:
+        command_json = {"action": "restart_pc"}
     elif "/camera_on" in lower_text:
         command_json = {"action": "camera_stream", "value": "on"}
     elif "/camera_off" in lower_text:
@@ -381,7 +385,18 @@ Longitude: {location_data['longitude']}
                     await loader.edit_text(f"❌ Upload Failed: {e}")
             else:
                 await loader.edit_text("❌ Screenshot failed.")
-                
+        elif action == "shutdown_pc":
+            if status_msg: await status_msg.delete()
+            await update.message.reply_text("🔌 **Shutting down immediately.**\nGoodbye!", parse_mode='Markdown')
+            # Small delay to ensure message sends before OS kills the network
+            await asyncio.sleep(1) 
+            execute_command(command_json)
+
+        elif action == "restart_pc":
+            if status_msg: await status_msg.delete()
+            await update.message.reply_text("🔄 **Restarting system...**\nI'll be back online shortly.", parse_mode='Markdown')
+            await asyncio.sleep(1)
+            execute_command(command_json)  
         elif action == "system_sleep":
             if status_msg: await status_msg.delete()
             await update.message.reply_text("💤 Goodnight.", reply_markup=get_main_keyboard())
