@@ -21,6 +21,8 @@ file_activity_log.json
 audio_recording.wav
 *.jpg
 *.png
+*.zip
+*.xpi
 
 # Local Agent Data (Machine-specific)
 .agents/

@@ -9,6 +9,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6.svg?style=flat-square&logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 [![AI Engine](https://img.shields.io/badge/AI-Ollama-000000.svg?style=flat-square&logo=ai&logoColor=white)](https://ollama.com)
+[![Version](https://img.shields.io/badge/Version-1.5.0-EB00FF.svg?style=flat-square)](#)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local-00C853.svg?style=flat-square&logo=shield&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-MIT-FFC107.svg?style=flat-square)](LICENSE)
 
@@ -135,56 +136,50 @@ ZYRON isn't just another assistant - it's your personal AI that lives entirely o
 
 ---
 
-## Quick Start
+## 🚀 The Ultimate 0-100 Setup Guide
 
-### Prerequisites
+Follow these stages to get Zyron running perfectly on your machine.
 
-| Requirement | Version | Download |
-|-------------|---------|----------|
-| **Windows** | 10/11 (64-bit) | Pre-installed |
-| **Python** | 3.10+ | [python.org](https://www.python.org/downloads/) |
-| **Ollama** | Latest | [ollama.com](https://ollama.com/) |
-| **Telegram Bot** | Token | [@BotFather](https://t.me/BotFather) |
+### Stage 1: The Engine (AI Infrastructure)
+1.  **Download Ollama**: Visit [ollama.com](https://ollama.com) and install it.
+2.  **Pull the Model**: Open your terminal and run:
+    ```bash
+    ollama pull qwen2.5-coder:7b
+    ```
+    *(This model is optimized for tool-calling and system automation)*
 
-### Installation (5 Minutes)
+### Stage 2: The Core (Installation)
+1.  **Clone & Enter**:
+    ```bash
+    git clone https://github.com/Surajkumar5050/zyron-assistant.git
+    cd zyron-assistant
+    ```
+2.  **Automated Installer**: Run the setup script. It creates your environment and installs all 30+ required libraries.
+    ```bash
+    setup.bat
+    ```
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/Surajkumar5050/zyron-assistant.git
-cd zyron-assistant
+### Stage 3: The Bridge (Firefox Integration) 🦊
+For live browser monitoring and stealth research:
+1.  **Add-on**: Download `zyron_activity_monitor.xpi` from the [Releases](https://github.com/Surajkumar5050/zyron-assistant/releases) section.
+2.  **Install**: In Firefox, go to `about:addons` -> Gear Icon ⚙️ -> **Install Add-on From File...**.
+3.  **Secure Bridge**: Run the registration script to connect Firefox to your PC:
+    ```bash
+    python src/zyron/scripts/register_native_host.py
+    ```
 
-# 2. Run the automated installer
-setup.bat
+### Stage 4: Remote Control (Telegram)
+1.  **Create Bot**: Message [@BotFather](https://t.me/BotFather) on Telegram and get your `API TOKEN`.
+2.  **Configure `.env`**: Open the `.env` file created by the installer and fill it in:
+    ```env
+    TELEGRAM_TOKEN=your_bot_token_here
+    ALLOWED_TELEGRAM_USERNAME=your_telegram_username
+    MODEL_NAME=qwen2.5-coder:7b
+    ```
 
-# That's it! The installer handles:
-# ✓ Python environment setup (Python 3.9+)
-# ✓ Package installation (pip install -e .)
-# ✓ AI model download (qwen2.5-coder:7b)
-# ✓ Windows startup integration
-# ✓ Stealth mode configuration
-```
-
-### Configuration
-
-Create a `.env` file:
-
-```env
-TELEGRAM_TOKEN=your_bot_token_here
-ALLOWED_TELEGRAM_USERNAME=your_telegram_username
-MODEL_NAME=qwen2.5-coder:7b
-OFFLINE_MODE=false # Set to true for 100% offline privacy
-LOG_LEVEL=INFO
-```
-
-### Launch
-
-```bash
-# Visible mode (for testing)
-start_zyron.bat
-
-# Stealth mode (runs in background)
-run_silent.vbs
-```
+### Stage 5: Launch (The Experience)
+*   **Visible Mode (Testing)**: Run `start_zyron.bat` to see the console and voice feedback.
+*   **Stealth Mode (Professional)**: Run `run_silent.vbs`. Zyron will move to the background and wait for your voice or Telegram commands without taking up window space.
 
 ---
 
@@ -303,7 +298,7 @@ zyron-assistant/
 
 ---
 
-## Latest Features (v1.3)
+## Latest Features (v1.5.0) 🚀
 
 ### Intelligent File Tracking
 - **Automatic Monitoring** - Tracks every file you open across all applications
@@ -322,9 +317,11 @@ Just describe what you're looking for:
 - **Timestamped** - Know when you copied it
 - **Quick Access** - Retrieve via voice or Telegram
 
-### Firefox Integration (New)
-- **Native Support** - Tracks active tabs via local history database.
-- **Privacy Focused** - No cloud syncing required.
+### Firefox Integration (v1.5)
+- **Permanent Browser Bridge** - Signed extension ensures it stays active after restart.
+- **Stealth Research** - Zyron finds answers in the background using "Quiet Tabs".
+- **Headless Fallback** - If Firefox is closed, Zyron automatically switches to a low-level headless search engine.
+- **Privacy Focused** - No cloud syncing required; 100% local activity monitoring.
 
 ### Offline Voice & Hybrid Mode
 - **Offline Wake Word** - Uses Vosk (local) for instant "Hey Pikachu" detection.
@@ -349,28 +346,33 @@ Just describe what you're looking for:
 
 ## Advanced Setup
 
-### Browser Activity Monitoring (Advanced)
+### Browser Activity Monitoring (v1.5) 🦊
 
-For the full experience (Screenshots, Tab Control, Media Control):
+For the full experience (Invisible Research, Stealth Mode, Media Control):
 
-1.  **Register the Native Host**:
+1.  **Download the Extension**:
+    - Go to the [Releases](https://github.com/Surajkumar5050/zyron-assistant/releases) section.
+    - Download **`zyron_activity_monitor.xpi`**.
+
+2.  **Install Permanently**:
+    - Open Firefox and go to `about:addons`.
+    - Click the **Gear (⚙️)** icon -> **Install Add-on From File...**.
+    - Select the `.xpi` file you downloaded.
+
+3.  **Register the Native Host**:
     ```bash
     python src/zyron/scripts/register_native_host.py
     ```
-    *(This connects Zyron directly to Firefox securely on your machine)*
+    *(This secures the bridge between your PC and the browser)*
 
-2.  **Load the Extension**:
-    - **Firefox**: `about:debugging` -> "This Firefox" -> "Load Temporary Add-on" -> Select `firefox_extension/manifest.json`.
-    - **Chrome**: Coming soon!
-
-Now Zyron (v1.4) can "see" and "control" your browser in real-time.
+Now Zyron can "see" and "research" and "control" your browser even if you're not looking.
 
 ---
 
 ### Advanced Browser Control (New v1.4) 🦊
 - **Smart Logic** - "Close it" knows you mean the YouTube tab you just watched.
 - **Ranked Matching** - "Mute Spotify" finds the exact tab instantly.
-- **Media Control** - Play/Pause/Next directly from Telegram (no need to open the tab).
+- **Media Control** - Play/Pause/Next in browser directly from Telegram (no need to open the tab).
 - **Tab Capture** - High-quality screenshots of specific tabs (background capture supported).
 
 ---
@@ -389,11 +391,21 @@ A: 2-4 GB idle, 6-8 GB during active AI processing.
 **Q: Can I use different AI models?**  
 A: Yes! Any Ollama-compatible model works. Just update `MODEL_NAME` in `.env`
 
-**Q: Does auto-start slow down my PC?**  
-A: No. It launches after Windows loads with minimal impact.
-
 **Q: Do I need Telegram?**  
-A: For remote control, yes. Voice-only mode is coming in future releases.
+A: For remote control, yes. Voice-only mode is available but remote features require the bot.
+
+---
+
+## 🛠️ Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **ModuleNotFoundError** | Run `setup.bat`. It will automatically sync your missing libraries. |
+| **Firefox Bridge Not Connected** | Run `python src/zyron/scripts/register_native_host.py` and restart Firefox. |
+| **Wake Word Not Detected** | Check your default Windows Microphone settings and ensure it's not muted. |
+| **Telegram Bot Not Responding** | Double-check your `TELEGRAM_TOKEN` in the `.env` file. |
+
+---
 
 ---
 
