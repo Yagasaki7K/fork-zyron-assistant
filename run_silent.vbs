@@ -1,5 +1,3 @@
 Set WshShell = CreateObject("WScript.Shell")
-strPath = Left(WScript.ScriptFullName, InStrRev(WScript.ScriptFullName, "\"))
-' This launches the bat file in invisible mode (0)
-WshShell.Run chr(34) & strPath & "start_zyron.bat" & chr(34), 0
+WshShell.Run chr(34) & "C:\zyron-assistant\start_zyron.bat" & chr(34), 0
 Set WshShell = Nothing
